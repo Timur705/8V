@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8 «В» — Электронный дневник</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        body.dark { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { background: white; border-radius: 20px; padding: 20px 30px; margin-bottom: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        body.dark .header { background: #1e1e2f; color: white; }
+        .header h1 { font-size: 1.8rem; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        body.dark .header h1 { background: linear-gradient(135deg, #a8c0ff, #3f2b96); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .theme-toggle { background: #f0f0f0; border: none; padding: 10px 20px; border-radius: 30px; cursor: pointer; font-size: 1rem; transition: all 0.3s; }
+        body.dark .theme-toggle { background: #2d2d44; color: white; }
+        .stats-link { background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-decoration: none; padding: 10px 25px; border-radius: 30px; font-weight: 600; cursor: pointer; border: none; font-size: 1rem; }
+        .dashboard { display: flex; gap: 25px; flex-wrap: wrap; }
+        .journal { flex: 2; min-width: 500px; background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .calculator { flex: 1; min-width: 320px; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); align-self: start; }
+        body.dark .journal, body.dark .calculator { background: #1e1e2f; color: #e0e0e0; }
+        .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; width: 100%; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102,126,234,0.4); }
+        .btn-add { display: inline-block; background: linear-gradient(135deg, #28a745, #20c997); color: white; text-decoration: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; margin-bottom: 20px; transition: transform 0.2s; }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 14px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 1rem; font-weight: 500; }
+        th { background: #f8f9fa; font-weight: 700; font-size: 1.05rem; }
+        body.dark th, body.dark td { border-bottom-color: #2d2d44; }
+        body.dark th { background: #2d2d44; }
+        .quarter-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .quarter-1 { background: #e3f2fd; color: #1976d2; } .quarter-2 { background: #e8f5e9; color: #388e3c; }
+        .quarter-3 { background: #fff3e0; color: #f57c00; } .quarter-4 { background: #fce4ec; color: #c2185b; }
+        body.dark .quarter-1 { background: #1a237e; color: #90caf9; } body.dark .quarter-2 { background: #1b5e20; color: #a5d6a7; }
+        body.dark .quarter-3 { background: #e65100; color: #ffcc80; } body.dark .quarter-4 { background: #4a148c; color: #ce93d8; }
+        .grade-cell { font-weight: 700; text-align: center; }
+        .grade-5 { color: #28a745; } .grade-4 { color: #17a2b8; } .grade-3 { color: #ffc107; } .grade-2 { color: #dc3545; }
+        .btn-delete { background: #dc3545; color: black; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 1.2rem; font-weight: bold; }
+        .btn-delete:hover { background: #c82333; color: #1a1a1a; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 12px; font-size: 1rem; }
+        body.dark select, body.dark input { background: #2d2d44; border-color: #3d3d5c; color: white; }
+        .preview-block { margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px; }
+        body.dark .preview-block { background: #2d2d44; }
+        .result { margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border-radius: 12px; font-size: 1.1rem; line-height: 1.6; font-weight: 500; color: #1a1a1a; white-space: pre-line; }
+        .result strong { font-weight: 800; color: #2e7d32; }
+        body.dark .result { background: linear-gradient(135deg, #1b5e20, #2e7d32); color: #ffffff; }
+        body.dark .result strong { color: #ffd700; }
+        .flash { background: #d4edda; color: #155724; padding: 12px; border-radius: 12px; margin-bottom: 20px; }
+        body.dark .flash { background: #1b5e20; color: #a5d6a7; }
+        .current-info { background: linear-gradient(135deg, #667eea20, #764ba220); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        .big-number { font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .delete-all-block { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 20px 0; text-align: center; border-radius: 12px; }
+        body.dark .delete-all-block { background: #2d2d00; border-color: #666600; color: #ffcc80; }
+        .delete-all-btn { background: #dc3545; color: white; border: none; padding: 8px 20px; border-radius: 30px; margin-top: 10px; cursor: pointer; font-weight: bold; }
+        .delete-all-btn:hover { background: #c82333; }
+        @media (max-width: 768px) { .journal { min-width: 100%; } .calculator { min-width: 100%; } .header { flex-direction: column; text-align: center; } }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; border-radius: 20px; padding: 30px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        body.dark .modal-content { background: #1e1e2f; color: #e0e0e0; }
+        .btn-close { background: #6c757d; margin-top: 20px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>📚 8 «В» класс — Электронный дневник</h1>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <span style="font-weight: 600;">👋 Привет, {{ username }}!</span>
+            <a href="{{ url_for('logout') }}" style="background: #dc3545; color: white; padding: 8px 16px; border-radius: 30px; text-decoration: none;">🚪 Выйти</a>
+            <button class="theme-toggle" onclick="toggleTheme()">🌙 Тёмная тема</button>
+            <button onclick="openStatsModal()" class="stats-link">📊 Статистика</button>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}<div class="flash">{{ messages[0] }}</div>{% endif %}
+    {% endwith %}
+
+    {% if not is_teacher %}
+    <div class="delete-all-block">
+        <strong>⚠️ Новый учебный год?</strong><br>
+        <small>Удалите старые оценки, чтобы начать с чистого листа</small><br>
+        <form method="post" action="{{ url_for('delete_all_grades') }}" onsubmit="return confirm('🗑 Удалить ВСЕ ваши оценки? Это действие нельзя отменить!');">
+            <button type="submit" class="delete-all-btn">🗑 Удалить все мои оценки</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="dashboard">
+        <div class="journal">
+            <div style="text-align: center;"><a href="{{ url_for('add_grade') }}" class="btn-add">➕ Добавить оценку</a></div>
+            <div class="table-wrapper">
+                {% if records %}
+                <table>
+                    <thead><tr><th>Ученик</th><th>Предмет</th><th>Дата</th><th>Четверть</th><th>Оценка</th><th></th></tr></thead>
+                    <tbody>
+                        {% for r in records %}
+                        <tr>
+                            <td>{{ r['last_name'] }}</td>
+                            <td>{{ r['title'] }}</td>
+                            <td>{{ r['date'] }}</td>
+                            <td><span class="quarter-badge quarter-{{ r['quarter'] }}">{{ r['quarter'] }} четв.</span></td>
+                            <td class="grade-cell grade-{{ r['score'] }}">{{ r['score'] }}</td>
+                            <td>
+                                <form method="post" action="{{ url_for('delete_grade', grade_id=r['grade_id']) }}" onsubmit="return confirm('Удалить оценку?');">
+                                    <button type="submit" class="btn-delete">🗑</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="text-align: center; color: #666;">📭 Нет записей. Добавьте первую оценку!</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="calculator">
+            <h2 style="margin-bottom: 20px;">🎯 Калькулятор цели</h2>
+            <div class="form-group">
+                <label>👨‍🎓 Ученик:</label>
+                {% if is_teacher %}
+                <select id="student_select">
+                    <option value="">— Выберите ученика —</option>
+                    {% for s in students %}<option value="{{ s['student_id'] }}">{{ s['last_name'] }}</option>{% endfor %}
+                </select>
+                {% else %}
+                <div style="padding: 12px; background: #f8f9fa; border-radius: 12px; font-weight: 600;">{{ username }}</div>
+                <input type="hidden" id="student_select" value="{{ session['student_id'] }}">
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label>📖 Предмет:</label>
+                <select id="subject_select">
+                    <option value="">— Выберите предмет —</option>
+                    {% for subj in subjects %}<option value="{{ subj['subject_id'] }}">{{ subj['title'] }}</option>{% endfor %}
+                </select>
+            </div>
+
+            <div class="current-info" id="current_info" style="display: none;">
+                <div>📊 Текущий средний за <span id="quarter_text">{{ current_quarter }}-ю четверть</span>:</div>
+                <div class="big-number" id="current_avg_display">—</div>
+                <div>📝 Оценок: <span id="grades_count">0</span></div>
+            </div>
+
+            <div class="form-group">
+                <label>🎯 Желаемая оценка:</label>
+                <select id="target_select">
+                    <option value="2.67">3 (тройка) – порог 2.67</option>
+                    <option value="3.67" selected>4 (четвёрка) – порог 3.67</option>
+                    <option value="4.67">5 (пятёрка) – порог 4.67</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>✏️ Или свой порог:</label>
+                <input type="number" id="threshold_input" step="0.01" value="3.67">
+            </div>
+
+            <button id="calculate_btn" class="btn-primary">🚀 Рассчитать</button>
+            <div id="result_area" style="display: none;"><div class="result" id="recommendation"></div></div>
+
+            <hr style="margin: 20px 0;">
+            <h3>🔮 Что будет, если добавить оценку?</h3>
+            <div class="form-group">
+                <label>➕ Несколько оценок (через запятую):</label>
+                <input type="text" id="preview_grades_input" placeholder="Например: 4, 4, 5 или 4,5,5">
+                <small style="font-size: 12px; color: #666;">Введите оценки через запятую: 2,3,4,5</small>
+            </div>
+            <button id="preview_btn" class="btn-primary" style="background: linear-gradient(135deg, #28a745, #20c997);">📈 Показать изменение</button>
+            <div id="preview_area" style="display: none;">
+                <div class="preview-block">
+                    <div>📊 Текущий средний: <strong id="preview_current">—</strong></div>
+                    <div>✨ Новый средний: <strong id="preview_new">—</strong></div>
+                    <div>📈 Изменение: <span id="preview_change"></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="statsModal" class="modal">
+    <div class="modal-content">
+        <h2>📊 Статистика</h2>
+        <div class="form-group">
+            <label>Ученик:</label>
+            {% if is_teacher %}
+            <select id="stats_student_select">
+                <option value="">— Выберите ученика —</option>
+                {% for s in students %}<option value="{{ s['student_id'] }}">{{ s['last_name'] }}</option>{% endfor %}
+            </select>
+            {% else %}
+            <div style="padding: 12px; background: #f8f9fa; border-radius: 12px; font-weight: 600;">{{ username }}</div>
+            <input type="hidden" id="stats_student_select" value="{{ session['student_id'] }}">
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label>Предмет:</label>
+            <select id="stats_subject_select">
+                <option value="">— Выберите предмет —</option>
+                {% for subj in subjects %}<option value="{{ subj['subject_id'] }}">{{ subj['title'] }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Четверть:</label>
+            <select id="stats_quarter_select">
+                <option value="1">1 четверть</option>
+                <option value="2">2 четверть</option>
+                <option value="3">3 четверть</option>
+                <option value="4" selected>4 четверть</option>
+                <option value="all">Весь год</option>
+            </select>
+        </div>
+        <button id="stats_show_btn" class="btn-primary" style="margin-bottom: 20px;">Показать</button>
+        <div id="stats_result" style="display: none;">
+            <div id="stats_info"></div>
+            <div id="stats_list"></div>
+        </div>
+        <button onclick="closeStatsModal()" class="btn-primary btn-close">Закрыть</button>
+    </div>
+</div>
+
+<script>
+    let currentQuarter = {{ current_quarter }};
+    function toggleTheme() {
+        document.body.classList.toggle('dark');
+        const btn = document.querySelector('.theme-toggle');
+        if (document.body.classList.contains('dark')) { btn.innerHTML = '☀️ Светлая тема'; } else { btn.innerHTML = '🌙 Тёмная тема'; }
+    }
+    const targetSelect = document.getElementById('target_select');
+    const thresholdInput = document.getElementById('threshold_input');
+    targetSelect.addEventListener('change', function() { thresholdInput.value = this.value; });
+    thresholdInput.addEventListener('input', function() { targetSelect.value = ''; });
+
+    async function loadCurrentAvg() {
+        const student_id = document.getElementById('student_select').value;
+        const subject_id = document.getElementById('subject_select').value;
+        if (!student_id || !subject_id) { document.getElementById('current_info').style.display = 'none'; return; }
+        const response = await fetch('/api/calculate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student_id: parseInt(student_id), subject_id: parseInt(subject_id), threshold: 5, quarter: currentQuarter }) });
+        const data = await response.json();
+        document.getElementById('current_info').style.display = 'block';
+        document.getElementById('current_avg_display').innerHTML = data.current_avg || 0;
+        document.getElementById('grades_count').innerHTML = data.count || 0;
+    }
+    document.getElementById('student_select').addEventListener('change', loadCurrentAvg);
+    document.getElementById('subject_select').addEventListener('change', loadCurrentAvg);
+
+    document.getElementById('calculate_btn').addEventListener('click', async function() {
+        const student_id = document.getElementById('student_select').value;
+        const subject_id = document.getElementById('subject_select').value;
+        const threshold = parseFloat(thresholdInput.value);
+        if (!student_id || !subject_id) { alert('Выберите ученика и предмет'); return; }
+        if (isNaN(threshold)) { alert('Введите корректный порог'); return; }
+        const response = await fetch('/api/calculate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student_id: parseInt(student_id), subject_id: parseInt(subject_id), threshold: threshold, quarter: currentQuarter }) });
+        const data = await response.json();
+        document.getElementById('result_area').style.display = 'block';
+        document.getElementById('recommendation').innerHTML = data.recommendation.replace(/\n/g, '<br>');
+    });
+
+    document.getElementById('preview_btn').addEventListener('click', async function() {
+        const student_id = document.getElementById('student_select').value;
+        const subject_id = document.getElementById('subject_select').value;
+        const gradesInput = document.getElementById('preview_grades_input').value;
+        if (!student_id || !subject_id) { alert('Выберите ученика и предмет'); return; }
+        if (!gradesInput.trim()) { alert('Введите оценки через запятую'); return; }
+        const newGrades = gradesInput.split(',').map(g => parseInt(g.trim())).filter(g => !isNaN(g) && g >= 2 && g <= 5);
+        if (newGrades.length === 0) { alert('Введите корректные оценки (2,3,4,5)'); return; }
+        const response = await fetch('/api/preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student_id: parseInt(student_id), subject_id: parseInt(subject_id), new_grades: newGrades, quarter: currentQuarter }) });
+        const data = await response.json();
+        document.getElementById('preview_area').style.display = 'block';
+        document.getElementById('preview_current').innerHTML = data.current_avg || 0;
+        document.getElementById('preview_new').innerHTML = data.new_avg;
+        const changeSpan = document.getElementById('preview_change');
+        changeSpan.innerHTML = (data.change > 0 ? '+' : '') + data.change;
+        changeSpan.style.color = data.change >= 0 ? '#28a745' : '#dc3545';
+    });
+
+    function openStatsModal() { document.getElementById('statsModal').style.display = 'flex'; }
+    function closeStatsModal() { document.getElementById('statsModal').style.display = 'none'; }
+    document.getElementById('stats_show_btn').addEventListener('click', async function() {
+        const student_id = document.getElementById('stats_student_select').value;
+        const subject_id = document.getElementById('stats_subject_select').value;
+        const quarter = document.getElementById('stats_quarter_select').value;
+        if (!student_id || !subject_id) { alert('Выберите ученика и предмет'); return; }
+        const response = await fetch('/api/stats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student_id: parseInt(student_id), subject_id: parseInt(subject_id), quarter: quarter }) });
+        const data = await response.json();
+        document.getElementById('stats_result').style.display = 'block';
+        document.getElementById('stats_info').innerHTML = `📊 Количество оценок: ${data.count}<br>📈 Средний балл: <strong>${data.average}</strong>`;
+        if (data.scores && data.scores.length > 0) {
+            let listHtml = '<h4>Список оценок:</h4><ul>';
+            for (let i = 0; i < data.scores.length; i++) { listHtml += `<li>${data.dates[i]} — ${data.scores[i]}</li>`; }
+            listHtml += '</ul>';
+            document.getElementById('stats_list').innerHTML = listHtml;
+        } else { document.getElementById('stats_list').innerHTML = '<p>Нет оценок</p>'; }
+    });
+</script>
+</body>
+</html>

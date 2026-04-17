@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Добавить оценку</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        body.dark .card { background: #1e1e2f; color: white; }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; }
+        select, input {
+            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 12px; font-size: 1rem;
+        }
+        body.dark select, body.dark input { background: #2d2d44; border-color: #3d3d5c; color: white; }
+        button {
+            width: 100%; padding: 12px;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer;
+        }
+        button:hover { opacity: 0.9; }
+        .flash { background: #f8d7da; color: #721c24; padding: 12px; border-radius: 12px; margin-bottom: 20px; }
+        .back { text-align: center; margin-top: 20px; }
+        .back a { color: #667eea; text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>➕ Добавить оценку</h1>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}<div class="flash">{{ messages[0] }}</div>{% endif %}
+        {% endwith %}
+
+        <form method="post">
+            <!-- ✅ ИСПРАВЛЕНО: Убран выпадающий список, так как бэкенд берёт ID из сессии -->
+            <div class="form-group">
+                <label>Ученик:</label>
+                <div style="padding: 12px; background: #f8f9fa; border-radius: 12px; font-weight: 600; color: #495057;">
+                    {{ username }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Предмет:</label>
+                <select name="subject_id" required>
+                    <option value="">— Выберите предмет —</option>
+                    {% for subj in subjects %}
+                    <option value="{{ subj['subject_id'] }}">{{ subj['title'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Дата (ДД.ММ.ГГГГ):</label>
+                <input type="text" name="date" placeholder="например: 15.04.2026" required pattern="\d{2}\.\d{2}\.\d{4}">
+            </div>
+
+            <div class="form-group">
+                <label>Оценка:</label>
+                <select name="score" required>
+                    <option value="">— Выберите оценку —</option>
+                    <option value="2">2 (неудовлетворительно)</option>
+                    <option value="3">3 (удовлетворительно)</option>
+                    <option value="4">4 (хорошо)</option>
+                    <option value="5">5 (отлично)</option>
+                </select>
+            </div>
+
+            <button type="submit">💾 Добавить оценку</button>
+        </form>
+
+        <div class="back">
+            <a href="{{ url_for('index') }}">← Назад к журналу</a>
+        </div>
+    </div>
+</body>
+</html>

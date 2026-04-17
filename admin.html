@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель — 8 «В» класс</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { background: white; border-radius: 15px; padding: 20px 30px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { color: #667eea; font-size: 1.8rem; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; text-decoration: none; display: inline-block; }
+        .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-sm { padding: 5px 12px; font-size: 0.85rem; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .card { background: white; border-radius: 15px; padding: 25px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .flash { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; }
+        .flash.error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #dee2e6; }
+        th { background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-weight: 600; }
+        tr:hover { background: #f8f9fa; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin-top: 20px; }
+        .stat-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 10px; text-align: center; }
+        .stat-card h3 { font-size: 2rem; margin-bottom: 5px; }
+        .grade-5 { color: #28a745; } .grade-4 { color: #17a2b8; } .grade-3 { color: #ffc107; } .grade-2 { color: #dc3545; }
+        @media (max-width: 768px) { .header { flex-direction: column; gap: 15px; } table { font-size: 0.85rem; } th, td { padding: 8px 10px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👨‍🏫 Админ-панель — 8 «В» класс</h1>
+            <div>
+                <span style="margin-right: 20px; color: #6c757d;">👋 {{ username }}</span>
+                <a href="{{ url_for('index') }}" class="btn btn-primary">📝 К журналу</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger">🚪 Выйти</a>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="flash {{ 'error' if category == 'error' else '' }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card">
+            <h2 style="margin-bottom: 20px; color: #667eea;">👥 Управление учениками</h2>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead><tr><th>Ученик</th><th>Кол-во оценок</th><th>Средний балл</th><th>Действия</th></tr></thead>
+                    <tbody>
+                        {% for s in stats %}
+                        <tr>
+                            <td><strong>{{ s['last_name'] }}</strong></td>
+                            <td>{{ s['count'] }}</td>
+                            <td>
+                                {% if s['average'] > 0 %}{{ s['average'] }}{% else %}—{% endif %}
+                            </td>
+                            <td>
+                                <form method="post" action="{{ url_for('admin_delete_grades', student_id=s['student_id']) }}" style="display:inline-block; margin-right: 5px;">
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('🗑 Удалить ВСЕ оценки ученика {{ s['last_name'] }}? Это действие нельзя отменить!');">🗑 Оценки</button>
+                                </form>
+                                <form method="post" action="{{ url_for('admin_reset_password', student_id=s['student_id']) }}" style="display:inline-block;">
+                                    <button type="submit" class="btn btn-warning btn-sm" onclick="return confirm('🔄 Сбросить пароль ученика {{ s['last_name'] }}? Аккаунт будет удалён. Ученик сможет зарегистрироваться заново с новым паролем. Все оценки сохранятся.');">🔄 Пароль</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 style="margin-bottom: 20px; color: #667eea;">📋 Все оценки класса</h2>
+            {% if all_grades %}
+            <table>
+                <thead><tr><th>Ученик</th><th>Предмет</th><th>Дата</th><th>Оценка</th></tr></thead>
+                <tbody>
+                    {% for g in all_grades %}
+                    <tr>
+                        <td>{{ g['last_name'] }}</td>
+                        <td>{{ g['title'] }}</td>
+                        <td>{{ g['date'] }}</td>
+                        <td><span class="grade-{{ g['score'] }}">{{ g['score'] }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="text-align: center; color: #6c757d; padding: 40px;">📭 Оценок пока нет</p>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <h2 style="margin-bottom: 20px; color: #667eea;">📊 Общая статистика класса</h2>
+            <div class="stats-grid">
+                <div class="stat-card"><h3>{{ stats|length }}</h3><p>Учеников в классе</p></div>
+                <div class="stat-card"><h3>{{ all_grades|length }}</h3><p>Всего оценок</p></div>
+                <div class="stat-card">
+                    <h3>{% if all_grades %}{{ (all_grades|sum(attribute='score') / all_grades|length)|round(2) }}{% else %}0{% endif %}</h3>
+                    <p>Средний по классу</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

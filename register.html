@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Регистрация — 8 «В» Дневник</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; padding: 20px; }
+        .card { background: white; border-radius: 20px; padding: 40px; width: 100%; max-width: 450px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        h1 { text-align: center; margin-bottom: 30px; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 12px; font-size: 1rem; }
+        button { width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+        .flash { background: #d4edda; color: #155724; padding: 12px; border-radius: 12px; margin-bottom: 20px; }
+        .login-link { text-align: center; margin-top: 20px; }
+        .login-link a { color: #667eea; text-decoration: none; }
+        .hint { font-size: 12px; color: #666; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>📝 Регистрация</h1>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}<div class="flash">{{ messages[0] }}</div>{% endif %}
+        {% endwith %}
+
+        {% if step == 1 %}
+        <form method="post">
+            <div class="form-group"><label>Имя пользователя:</label><input type="text" name="username" required><div class="hint">Придумайте логин (например: isakova_e)</div></div>
+            <div class="form-group"><label>Пароль:</label><input type="password" name="password" required><div class="hint">Минимум 4 символа</div></div>
+            <div class="form-group"><label>Подтвердите пароль:</label><input type="password" name="confirm_password" required></div>
+            <button type="submit">Далее</button>
+        </form>
+        {% elif step == 2 %}
+        <form method="post">
+            <input type="hidden" name="username" value="{{ username }}">
+            <input type="hidden" name="password" value="{{ password }}">
+            <input type="hidden" name="confirm_password" value="{{ password }}">
+            <div class="form-group">
+                <label>Выберите себя из списка:</label>
+                <select name="selected_student" required>
+                    <option value="">— Выберите —</option>
+                    {% for s in students %}<option value="{{ s['student_id'] }}">{{ s['last_name'] }}</option>{% endfor %}
+                </select>
+                <div class="hint">Выберите свои фамилию и имя</div>
+            </div>
+            <button type="submit">Зарегистрироваться</button>
+        </form>
+        {% endif %}
+        <div class="login-link"><a href="{{ url_for('login') }}">Уже есть аккаунт? Войти</a></div>
+    </div>
+</body>
+</html>
