@@ -13,20 +13,46 @@ SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://afcmgpfqkzkuolhmecty.supa
 SUPABASE_KEY = os.environ.get('SUPABASE_KEY', 'sb_publishable_f8pacMGA99MmWGldZizV0w_Z6uqOeFF')
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+
 def get_quarter(date_str):
+    """Определяет четверть по дате в любом формате"""
     try:
-        date = datetime.strptime(date_str, '%Y-%m-%d')
+        # Пробуем разные форматы
+        if '-' in date_str:
+            # Формат YYYY-MM-DD
+            date = datetime.strptime(date_str, '%Y-%m-%d')
+        elif '.' in date_str:
+            # Формат DD.MM.YYYY
+            date = datetime.strptime(date_str, '%d.%m.%Y')
+        else:
+            return None
+
         year = date.year
-        if date >= datetime(year, 9, 1) and date <= datetime(year, 10, 28): return 1
-        if date >= datetime(year, 11, 1) and date <= datetime(year, 12, 31): return 2
-        if date >= datetime(year, 1, 5) and date <= datetime(year, 3, 31): return 3
-        if date >= datetime(year, 4, 1) and date <= datetime(year, 5, 31): return 4
-    except: pass
+
+        # 1 четверть: 1 сен - 28 окт
+        if (date.month == 9 and date.day >= 1) or (date.month == 10 and date.day <= 28):
+            return 1
+        # 2 четверть: 1 ноя - 31 дек
+        if date.month == 11 or (date.month == 12 and date.day <= 31):
+            return 2
+        # 3 четверть: 5 янв - 31 мар
+        if (date.month == 1 and date.day >= 5) or date.month == 2 or (date.month == 3 and date.day <= 31):
+            return 3
+        # 4 четверть: 1 апр - 31 май
+        if date.month == 4 or (date.month == 5 and date.day <= 31):
+            return 4
+
+    except Exception as e:
+        print(f"get_quarter error for {date_str}: {e}")
+        pass
+
     return None
+
 
 def get_current_quarter():
     today = datetime.now()
     return 4 if today.month in [6,7,8] else get_quarter(today.strftime('%Y-%m-%d'))
+
 
 def get_quarter_dates(quarter, year=None):
     if year is None: year = datetime.now().year
@@ -42,6 +68,7 @@ def get_quarter_dates(quarter, year=None):
         return f"{year}-04-01", f"{year}-05-31"
     return None, None
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -51,15 +78,16 @@ def login():
         user = response.data[0] if response.data else None
 
         if user and check_password_hash(user['password_hash'], password):
-            session['user_id'] = user['user_id']  # ✅ Исправлено
+            session['user_id'] = user['user_id']
             session['username'] = user['username']
             session['student_id'] = user['student_id']
-            session.permanent = True              # ✅ Сессия на 3 года
+            session.permanent = True
             flash(f'Добро пожаловать, {username}!')
             return redirect(url_for('index'))
         else:
             flash('Неверное имя пользователя или пароль')
     return render_template('login.html')
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -115,11 +143,13 @@ def register():
         return render_template('register.html', step=2, students=available, username=username, password=password)
     return render_template('register.html', step=1)
 
+
 @app.route('/logout')
 def logout():
     session.clear()
     flash('Вы вышли из системы')
     return redirect(url_for('login'))
+
 
 def login_required(f):
     from functools import wraps
@@ -131,11 +161,10 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
 @app.route('/')
 @login_required
-
 def index():
-    # Если student_id = None (учитель) → перенаправляем в админку
     if session.get('student_id') is None:
         return redirect(url_for('admin_panel'))
 
@@ -144,7 +173,7 @@ def index():
 
     user_response = supabase.table('users').select('*').eq('user_id', session['user_id']).execute()
     user = user_response.data[0] if user_response.data else None
-    is_teacher = (user and user['student_id'] is None)  # для ученика всегда False
+    is_teacher = (user and user['student_id'] is None)
 
     records_response = supabase.table('grades')\
         .select('grade_id, student_id, subject_id, date, score, students(last_name), subjects(title)')\
@@ -186,10 +215,6 @@ def index():
                            is_teacher=is_teacher)
 
 
-
-
-
-
 @app.route('/add', methods=('GET', 'POST'))
 @login_required
 def add_grade():
@@ -201,13 +226,24 @@ def add_grade():
         subject_id = int(request.form.get('subject_id'))
         date = request.form['date']
         score = int(request.form['score'])
+        
         if not (2 <= score <= 5):
             flash('Оценка должна быть от 2 до 5.')
         else:
+            # 🔧 ШАГ 3: Обработка даты — если ДД.ММ.ГГГГ, конвертируем в ГГГГ-ММ-ДД
+            if '.' in date:
+                try:
+                    d, m, y = date.split('.')
+                    date_sql = f"{y}-{m}-{d}"
+                except:
+                    date_sql = date
+            else:
+                date_sql = date
+            
             supabase.table('grades').insert({
                 'student_id': student_id,
                 'subject_id': subject_id,
-                'date': date,
+                'date': date_sql,
                 'score': score
             }).execute()
             flash('✨ Оценка успешно добавлена!')
@@ -217,6 +253,7 @@ def add_grade():
                            students=students_response.data,
                            subjects=subjects_response.data,
                            username=session['username'])
+
 
 @app.route('/delete/<int:grade_id>', methods=['POST'])
 @login_required
@@ -232,6 +269,7 @@ def delete_grade(grade_id):
         flash('❌ Нельзя удалить чужую оценку')
     return redirect(url_for('index'))
 
+
 # 🆕 Удалить все свои оценки
 @app.route('/delete-all-grades', methods=['POST'])
 @login_required
@@ -242,6 +280,7 @@ def delete_all_grades():
     supabase.table('grades').delete().eq('student_id', session['student_id']).execute()
     flash('🗑 Все ваши оценки удалены. Новый год начинается с чистого листа!')
     return redirect(url_for('index'))
+
 
 # 🆕 Админ: удалить оценки ученика
 @app.route('/admin/delete-grades/<int:student_id>', methods=['POST'])
@@ -255,6 +294,7 @@ def admin_delete_grades(student_id):
     flash('🗑 Оценки ученика удалены')
     return redirect(url_for('admin_panel'))
 
+
 # 🆕 Админ: сброс пароля (удаление аккаунта)
 @app.route('/admin/reset-password/<int:student_id>', methods=['POST'])
 @login_required
@@ -266,6 +306,7 @@ def admin_reset_password(student_id):
     supabase.table('users').delete().eq('student_id', student_id).execute()
     flash('🔄 Аккаунт удалён. Ученик может зарегистрироваться заново.')
     return redirect(url_for('admin_panel'))
+
 
 @app.route('/api/calculate', methods=['POST'])
 @login_required
@@ -364,6 +405,7 @@ def calculate_required():
 
     return jsonify({'current_avg': round(current_avg, 2), 'count': current_count, 'has_estimates': True, 'recommendation': recommendation, 'need': {'combinations': all_combinations[:5]}})
 
+
 @app.route('/api/preview', methods=['POST'])
 @login_required
 def preview_avg():
@@ -399,6 +441,7 @@ def preview_avg():
 
     return jsonify({'current_avg': round(current_avg, 2), 'new_avg': round(new_avg, 2), 'change': round(change, 2), 'has_estimates': True})
 
+
 @app.route('/api/stats', methods=['POST'])
 @login_required
 def get_stats():
@@ -427,6 +470,7 @@ def get_stats():
         return jsonify({'count': len(scores), 'average': round(avg, 2), 'scores': scores, 'dates': formatted_dates})
     else:
         return jsonify({'count': 0, 'average': 0, 'scores': [], 'dates': []})
+
 
 @app.route('/admin')
 @login_required
@@ -459,6 +503,7 @@ def admin_panel():
             stats.append({'student_id': student['student_id'], 'last_name': student['last_name'], 'count': 0, 'average': 0})
 
     return render_template('admin.html', students=students_response.data, subjects=subjects_response.data, all_grades=all_grades, stats=stats, username=session['username'])
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
