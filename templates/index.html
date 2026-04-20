@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>8 «В» — Электронный дневник</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -57,7 +57,7 @@
         .delete-all-btn { background: #dc3545; color: white; border: none; padding: 8px 20px; border-radius: 30px; margin-top: 10px; cursor: pointer; font-weight: bold; }
         .delete-all-btn:hover { background: #c82333; }
 
-        /* 📱 АДАПТАЦИЯ ДЛЯ ТЕЛЕФОНОВ (до 768px) */
+        /* 📱 АДАПТАЦИЯ ДЛЯ ТЕЛЕФОНОВ (до 768px) — исправленная версия */
         @media (max-width: 768px) {
             body { padding: 10px; }
             .container { padding: 0; }
@@ -88,14 +88,16 @@
                 font-size: 0.9rem;
                 padding: 8px 16px;
             }
+            /* Таблица: убираем отрицательные отступы, добавляем горизонтальную прокрутку и центрирование */
             .table-wrapper {
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
-                margin: 0 -10px;
-                padding: 0 10px;
+                margin: 0;
+                padding: 0;
             }
             table {
-                min-width: 500px;
+                min-width: 600px;
+                width: 100%;
                 font-size: 0.85rem;
             }
             th, td { padding: 8px 10px; }
