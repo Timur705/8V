@@ -57,10 +57,16 @@
         .delete-all-btn { background: #dc3545; color: white; border: none; padding: 8px 20px; border-radius: 30px; margin-top: 10px; cursor: pointer; font-weight: bold; }
         .delete-all-btn:hover { background: #c82333; }
 
-        /* 📱 АДАПТАЦИЯ ДЛЯ ТЕЛЕФОНОВ (до 768px) — исправленная версия */
+        /* 📱 АДАПТАЦИЯ ДЛЯ ТЕЛЕФОНОВ (исправленная версия — без изменения интерфейса) */
         @media (max-width: 768px) {
-            body { padding: 10px; }
-            .container { padding: 0; }
+            body {
+                padding: 10px;
+                overflow-x: hidden;
+            }
+            .container {
+                padding: 0;
+                max-width: 100%;
+            }
             .header {
                 flex-direction: column;
                 text-align: center;
@@ -80,7 +86,14 @@
                 flex-direction: column;
                 gap: 15px;
             }
-            .journal, .calculator {
+            /* Принудительно вписываем блок журнала в экран, отменяя десктопный min-width */
+            .journal {
+                min-width: 100% !important;
+                width: 100%;
+                padding: 15px;
+                overflow: hidden;
+            }
+            .calculator {
                 min-width: 100%;
                 padding: 15px;
             }
@@ -88,19 +101,23 @@
                 font-size: 0.9rem;
                 padding: 8px 16px;
             }
-            /* Таблица: убираем отрицательные отступы, добавляем горизонтальную прокрутку и центрирование */
+            /* Таблица прокручивается внутри, а не вся страница */
             .table-wrapper {
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
+                width: 100%;
                 margin: 0;
-                padding: 0;
+                padding: 0 0 5px 0;
             }
             table {
                 min-width: 600px;
-                width: 100%;
+                width: auto;
                 font-size: 0.85rem;
             }
-            th, td { padding: 8px 10px; }
+            th, td {
+                padding: 8px 10px;
+                white-space: nowrap;
+            }
             .delete-all-block {
                 padding: 10px;
                 margin: 15px 0;
@@ -109,8 +126,12 @@
                 font-size: 0.85rem;
                 padding: 6px 12px;
             }
-            .calculator h2 { font-size: 1.3rem; }
-            .form-group label { font-size: 0.9rem; }
+            .calculator h2 {
+                font-size: 1.3rem;
+            }
+            .form-group label {
+                font-size: 0.9rem;
+            }
             select, input {
                 font-size: 16px;
                 padding: 8px;
@@ -119,8 +140,12 @@
                 font-size: 0.9rem;
                 padding: 10px;
             }
-            .current-info { padding: 10px; }
-            .big-number { font-size: 1.5rem; }
+            .current-info {
+                padding: 10px;
+            }
+            .big-number {
+                font-size: 1.5rem;
+            }
             .modal-content {
                 padding: 20px;
                 width: 95%;
